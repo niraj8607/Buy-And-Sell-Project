@@ -1,41 +1,60 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     email: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
-    phoneno: {
-        type: String,
-        match: [/^\d{10}$/, 'Phone number must be exactly 10 digits']
+    phoneNo: {
+      type: String,
+      match: [/^\d{10}$/],
     },
     password: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     token: {
-        type: String
+      type: String,
     },
     refreshToken: {
-        type: String
+      type: String,
     },
-    cart: [{
+    profilePic: {
+      type: String,
+      default:
+        "https://static.vecteezy.com/system/resources/previews/018/765/757/original/user-profile-icon-in-flat-style-member-avatar-illustration-on-isolated-background-human-permission-sign-business-concept-vector.jpg",
+    },
+    cart: [
+      {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Product"
-    }],
-    product: [{
+        ref: "Product",
+      },
+    ],
+    products: [
+      {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Product"
-    }]
-}, {
-    timestamps: true 
+        ref: "Product",
+      },
+    ],
+  },
+  { timestamps: true }
+);
+
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
-module.exports = mongoose.model("user",userSchema);
+const User = mongoose.model("User", userSchema);
+module.exports = User;
